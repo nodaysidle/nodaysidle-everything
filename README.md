@@ -202,8 +202,8 @@ The files are on the [latest release](https://github.com/nodaysidle/nodaysidle-e
 ### Option 1: Arch Linux package (`pacman`)
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.0-1-x86_64.pkg.tar.zst
-sudo pacman -U craft-anything-0.1.0-1-x86_64.pkg.tar.zst
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.1-1-x86_64.pkg.tar.zst
+sudo pacman -U craft-anything-0.1.1-1-x86_64.pkg.tar.zst
 ```
 
 ### Option 2: Debian / Ubuntu (`.deb`)
@@ -211,16 +211,16 @@ sudo pacman -U craft-anything-0.1.0-1-x86_64.pkg.tar.zst
 Needs glibc 2.39 or newer (Ubuntu 24.04, Debian 13).
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything_0.1.0_amd64.deb
-sudo apt install ./craft-anything_0.1.0_amd64.deb
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything_0.1.1_amd64.deb
+sudo apt install ./craft-anything_0.1.1_amd64.deb
 ```
 
 ### Option 3: Standalone tarball (`~/.local`, no root)
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.0-linux-x86_64.tar.gz
-tar xzf craft-anything-0.1.0-linux-x86_64.tar.gz
-craft-anything-0.1.0/packaging/install.sh
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.1-linux-x86_64.tar.gz
+tar xzf craft-anything-0.1.1-linux-x86_64.tar.gz
+craft-anything-0.1.1/packaging/install.sh
 ```
 
 Remove it again with `packaging/install.sh --uninstall`.

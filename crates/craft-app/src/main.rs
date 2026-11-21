@@ -17,6 +17,7 @@ use tracing_subscriber::EnvFilter;
 #[derive(Parser)]
 #[command(
     name = "craft-anything",
+    version,
     about = "Study a target, recreate it with your coding agent, compare, and refine until close."
 )]
 struct Cli {

@@ -338,7 +338,7 @@ dependencies = [
 
 [[package]]
 name = "craft-agents"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "craft-core",
@@ -351,7 +351,7 @@ dependencies = [
 
 [[package]]
 name = "craft-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "axum",
@@ -376,7 +376,7 @@ dependencies = [
 
 [[package]]
 name = "craft-browser"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "base64",
  "futures-util",
@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "craft-compare"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "craft-browser",
@@ -405,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "craft-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "chrono",
@@ -419,7 +419,7 @@ dependencies = [
 
 [[package]]
 name = "craft-inspect"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "axum",

@@ -1,6 +1,6 @@
 # Builds the Arch package from this checkout: cd packaging && makepkg -f
 pkgname=craft-anything
-pkgver=0.1.0
+pkgver=0.1.1
 pkgrel=1
 pkgdesc="Study a website, app, game or file and rebuild it with your own coding agent"
 arch=('x86_64')
