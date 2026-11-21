@@ -197,12 +197,12 @@ Requirements: a Chromium-family browser (Chromium, Chrome, or `npx playwright in
 
 Every option installs the same things: the `craft-anything` program, the `craft-anything-app` launcher that starts the local server and opens the UI as an app window, and an application entry with its icon, so **Craft Anything** appears in the Omarchy Apps menu. Runs are stored in `~/.local/share/craft-anything/runs`.
 
-The files are on the [v0.1.0 release](https://github.com/nodaysidle/nodaysidle-everything/releases/tag/v0.1.0), with a `SHA256SUMS` to check them against.
+The files are on the [latest release](https://github.com/nodaysidle/nodaysidle-everything/releases/latest), with a `SHA256SUMS` to check them against.
 
 ### Option 1: Arch Linux package (`pacman`)
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything-0.1.0-1-x86_64.pkg.tar.zst
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.0-1-x86_64.pkg.tar.zst
 sudo pacman -U craft-anything-0.1.0-1-x86_64.pkg.tar.zst
 ```
 
@@ -211,14 +211,14 @@ sudo pacman -U craft-anything-0.1.0-1-x86_64.pkg.tar.zst
 Needs glibc 2.39 or newer (Ubuntu 24.04, Debian 13).
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything_0.1.0_amd64.deb
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything_0.1.0_amd64.deb
 sudo apt install ./craft-anything_0.1.0_amd64.deb
 ```
 
 ### Option 3: Standalone tarball (`~/.local`, no root)
 
 ```bash
-curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything-0.1.0-linux-x86_64.tar.gz
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/latest/download/craft-anything-0.1.0-linux-x86_64.tar.gz
 tar xzf craft-anything-0.1.0-linux-x86_64.tar.gz
 craft-anything-0.1.0/packaging/install.sh
 ```
