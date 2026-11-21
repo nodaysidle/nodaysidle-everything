@@ -38,3 +38,9 @@ tmp/
 *.tgz
 *.zip
 *.iso
+
+# Packaging build output
+packaging/src/
+packaging/pkg/
+*.pkg.tar.zst
+*.deb

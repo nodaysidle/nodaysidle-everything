@@ -195,7 +195,27 @@ Claude Code, Codex and Antigravity output is parsed into readable progress lines
 
 Requirements: a Chromium-family browser (Chromium, Chrome, or `npx playwright install chromium`), and at least one coding agent for real runs.
 
-**From the release (Linux x86_64, no Rust needed):**
+Every option installs the same things: the `craft-anything` program, the `craft-anything-app` launcher that starts the local server and opens the UI as an app window, and an application entry with its icon, so **Craft Anything** appears in the Omarchy Apps menu. Runs are stored in `~/.local/share/craft-anything/runs`.
+
+The files are on the [v0.1.0 release](https://github.com/nodaysidle/nodaysidle-everything/releases/tag/v0.1.0), with a `SHA256SUMS` to check them against.
+
+### Option 1: Arch Linux package (`pacman`)
+
+```bash
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything-0.1.0-1-x86_64.pkg.tar.zst
+sudo pacman -U craft-anything-0.1.0-1-x86_64.pkg.tar.zst
+```
+
+### Option 2: Debian / Ubuntu (`.deb`)
+
+Needs glibc 2.39 or newer (Ubuntu 24.04, Debian 13).
+
+```bash
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything_0.1.0_amd64.deb
+sudo apt install ./craft-anything_0.1.0_amd64.deb
+```
+
+### Option 3: Standalone tarball (`~/.local`, no root)
 
 ```bash
 curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything-0.1.0-linux-x86_64.tar.gz
@@ -203,21 +223,20 @@ tar xzf craft-anything-0.1.0-linux-x86_64.tar.gz
 craft-anything-0.1.0/packaging/install.sh
 ```
 
-**From source (needs Rust and Cargo):**
+Remove it again with `packaging/install.sh --uninstall`.
+
+### Option 4: Build from source
+
+Needs Rust and Cargo.
 
 ```bash
 git clone https://github.com/nodaysidle/nodaysidle-everything.git
 cd nodaysidle-everything
-packaging/install.sh
+packaging/install.sh                    # per-user install into ~/.local
+# or build the packages yourself:
+(cd packaging && makepkg -si)           # Arch package
+packaging/build-deb.sh                  # .deb, built without dpkg
 ```
-
-Either way it installs, for your user only:
-
-- `~/.local/bin/craft-anything`, the program
-- `~/.local/bin/craft-anything-app`, a launcher that starts the local server and opens the UI as an app window
-- an application entry and icon, so **Craft Anything** appears in the Omarchy Apps menu
-
-Runs are stored in `~/.local/share/craft-anything/runs`. Remove everything except that data with `packaging/install.sh --uninstall`.
 
 Check what is available on your machine:
 

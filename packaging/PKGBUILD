@@ -1,0 +1,30 @@
+# Builds the Arch package from this checkout: cd packaging && makepkg -f
+pkgname=craft-anything
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Study a website, app, game or file and rebuild it with your own coding agent"
+arch=('x86_64')
+url="https://github.com/nodaysidle/nodaysidle-everything"
+license=('MIT')
+depends=('glibc' 'libgcc' 'bash' 'curl' 'hicolor-icon-theme')
+makedepends=('cargo')
+optdepends=(
+    'chromium: website study and visual parity checks'
+    'android-tools: phone app study over adb'
+    'grim: window capture on Wayland'
+    'sqlite: reading SQLite schemas'
+)
+options=('!debug')
+
+build() {
+    cd "$startdir/.."
+    cargo build --release --locked -p craft-app
+}
+
+package() {
+    install -Dm755 "$startdir/../target/release/craft-anything" "$pkgdir/usr/bin/craft-anything"
+    install -Dm755 "$startdir/craft-anything-app" "$pkgdir/usr/bin/craft-anything-app"
+    install -Dm644 "$startdir/craft-anything.desktop" "$pkgdir/usr/share/applications/craft-anything.desktop"
+    install -Dm644 "$startdir/craft-anything.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/craft-anything.svg"
+    install -Dm644 "$startdir/../LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
