@@ -135,16 +135,12 @@ Running everything for real found problems the automated tests had not, all fixe
 
 ```mermaid
 flowchart TD
-    T["Target: website, app, phone, game or file"] --> S[Study: inspectors]
-    S --> E[(Evidence store)]
-    S --> SPEC[Clean-room spec]
-    P[Your plain-English request] --> B
-    SPEC --> B["Build: your coding agent, headless, in the output folder"]
-    B --> O[Recreation]
-    O --> C["Check: build check, visual diff, spec checklist"]
-    E --> C
+    T["Target: website, app, phone, game or file"] --> S["Study: screenshots, visible structure, evidence"]
+    S -- "clean-room spec" --> B["Build: your coding agent, headless, in the output folder"]
+    P["Your plain-English request"] --> B
+    B --> C["Check: build check, visual diff against the study's screenshots, spec checklist"]
     C -- "below target: gaps go back" --> B
-    C -- "at target, or out of passes" --> R([Ready])
+    C -- "at target, or out of passes" --> R(["Ready"])
 ```
 
 | Crate | Role |
