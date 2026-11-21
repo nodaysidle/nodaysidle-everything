@@ -113,7 +113,8 @@ pub fn build_prompt(ctx: &BuildContext<'_>) -> String {
          Clean-room behavioral specification (build strictly from this specification):\n\
          ```json\n{}\n```\n\
          Work only inside the current directory. Prefer a result that runs without a build step \
-         (for a web page: an index.html that opens directly) unless the request needs otherwise.\n",
+         (for a web page: an index.html that opens directly) unless the request needs otherwise. Do not try to open, render or screenshot your result: \
+         Craft Anything renders and checks it after you finish.\n",
         ctx.iteration, ctx.request.prompt, spec_json
     );
 

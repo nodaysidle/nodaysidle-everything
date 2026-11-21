@@ -281,6 +281,9 @@ impl ComparatorPort for DefaultComparator {
         events.evidence(run_id, &item);
 
         Ok(ParityReport {
+            compared: artifact.components.visual.is_some()
+                || artifact.components.checklist.is_some()
+                || files.is_empty(),
             score,
             summary,
             gaps,

@@ -34,6 +34,8 @@ pub struct BuildOutcome {
 
 #[derive(Debug, Clone)]
 pub struct ParityReport {
+    /// False when only the build could be checked: nothing was compared with the original.
+    pub compared: bool,
     pub score: f32,
     pub summary: String,
     pub gaps: Vec<String>,
@@ -145,6 +147,7 @@ where
             status: RunStatus::Running,
             current_iteration: 0,
             latest_parity_score: None,
+            compared: true,
             workspace_dir: output_dir.clone(),
             iterations: Vec::new(),
             error: None,
@@ -162,6 +165,12 @@ where
         let target = self.config.target_parity_score;
         let passes = state.iterations.len();
         let (status, message) = match &outcome {
+            Ok(_) if !state.compared => (
+                RunStatus::Ready,
+                "Ready: the result builds cleanly, but there was nothing to compare it with. \
+                 Add screenshots of the original for a real match score."
+                    .to_string(),
+            ),
             Ok(_) if final_score >= target => (
                 RunStatus::Ready,
                 format!("Ready: {:.0}% match with the original", final_score * 100.0),
@@ -339,6 +348,7 @@ where
                 .compare(&study, output_dir, iteration, store, events, run_id)
                 .await?;
             state.latest_parity_score = Some(parity.score);
+            state.compared = parity.compared;
             state.iterations.push(IterationRecord {
                 iteration,
                 parity_score: parity.score,
@@ -454,12 +464,14 @@ mod tests {
         ) -> Result<ParityReport, CraftError> {
             if iteration == 1 {
                 Ok(ParityReport {
+                    compared: true,
                     score: 0.60,
                     summary: "Needs refinement".into(),
                     gaps: vec!["Header spacing off".into()],
                 })
             } else {
                 Ok(ParityReport {
+                    compared: true,
                     score: 0.92,
                     summary: "Close match".into(),
                     gaps: vec![],

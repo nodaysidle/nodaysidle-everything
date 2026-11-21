@@ -467,3 +467,43 @@ async fn phone_app_screenshots_clean_room_and_deep_without_package() {
         let _ = std::fs::remove_dir_all(d);
     }
 }
+
+/// A web game on disk is rendered for its Clean Room capture instead of waiting for a window.
+#[tokio::test]
+async fn web_game_folder_is_rendered_for_clean_room_capture() {
+    if craft_browser::find_browser().is_none() {
+        eprintln!("skipped: no Chromium-family browser on this machine");
+        return;
+    }
+    let dir = std::env::temp_dir().join(format!("craft-webgame-{}", Uuid::new_v4()));
+    std::fs::create_dir_all(dir.join("game")).unwrap();
+    std::fs::write(
+        dir.join("game/index.html"),
+        "<title>Dot Catch</title><h1>Dot Catch</h1><p>Score: 0</p><canvas width=200 height=100></canvas>",
+    )
+    .unwrap();
+    let run_id = Uuid::new_v4();
+    let store = EvidenceStore::open(dir.join("runs"), run_id).unwrap();
+    let request = CraftRequest {
+        target_kind: TargetKind::Game,
+        location: TargetLocation::Path(dir.join("game")),
+        prompt: "Rebuild this game".into(),
+        depth: InspectionDepth::CleanRoom,
+        preferred_agent: None,
+        output_dir: None,
+    };
+    let report = CompositeInspector
+        .study(&request, &store, &EventSink::new(64), run_id)
+        .await
+        .unwrap();
+    assert!(report.evidence_ids.iter().any(|id| id == "screenshot-desktop"));
+    assert!(report.deep_findings.is_none());
+    let expected: Vec<&String> = report
+        .clean_room_spec
+        .requirements
+        .iter()
+        .flat_map(|r| &r.expect_text)
+        .collect();
+    assert!(expected.iter().any(|t| *t == "Dot Catch"), "{expected:?}");
+    let _ = std::fs::remove_dir_all(dir);
+}

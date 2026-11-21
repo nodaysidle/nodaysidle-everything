@@ -171,6 +171,10 @@ pub enum RunStatus {
     Cancelled,
 }
 
+fn yes() -> bool {
+    true
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RunState {
     pub id: RunId,
@@ -180,6 +184,9 @@ pub struct RunState {
     pub status: RunStatus,
     pub current_iteration: u32,
     pub latest_parity_score: Option<f32>,
+    /// False when the latest score rests on the build check alone.
+    #[serde(default = "yes")]
+    pub compared: bool,
     pub workspace_dir: PathBuf,
     pub iterations: Vec<IterationRecord>,
     pub error: Option<String>,

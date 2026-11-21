@@ -449,7 +449,7 @@ function renderHistory() {
     return h('li', null, h('button', { class: 'hist', type: 'button', 'aria-current': r.id === S.sel ? 'true' : null, onclick: () => selectRun(r.id) },
       h('span', { class: 'row' }, h('b', null, KIND[r.request.target_kind] || r.request.target_kind), h('span', { class: 'pill ' + r.status }, r.status)),
       h('span', { class: 'prompt' }, r.request.prompt),
-      h('span', { class: 'meta' }, [name, r.latest_parity_score != null ? pct(r.latest_parity_score) : null, ago(r.created_at)].filter(Boolean).join(' · '))));
+      h('span', { class: 'meta' }, [name, r.latest_parity_score == null ? null : r.compared === false ? 'build only' : pct(r.latest_parity_score), ago(r.created_at)].filter(Boolean).join(' · '))));
   }));
 }
 let runsTimer;
@@ -527,7 +527,7 @@ function renderRun() {
 
   const score = r.latest_parity_score;
   $('meterFill').style.width = typeof score === 'number' ? Math.max(0, Math.min(100, score * 100)) + '%' : '0';
-  $('meterText').textContent = pct(score);
+  $('meterText').textContent = r.compared === false ? 'build only' : pct(score);
   if (typeof score === 'number') $('meterBar').setAttribute('aria-valuenow', Math.round(score * 100));
   else $('meterBar').removeAttribute('aria-valuenow');
 

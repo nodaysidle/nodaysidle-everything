@@ -61,6 +61,9 @@ Weights: build 0.3, visual 0.4, checklist 0.3, averaged over the signals that co
 - Phone capture records whatever is on screen; it never launches the app. Old devices without `adb exec-out` fall back to `adb shell`.
 - Desktop/game window capture works on Hyprland (`hyprctl` + `grim`); on macOS it captures the whole screen; other Linux compositors need user-supplied screenshots.
 - Binary `Info.plist` files in IPAs yield only a strings sample. The CSV row count counts lines.
+- A game folder containing `index.html` (or an `.html` file) is studied by rendering it, through the website inspector.
+- When neither a screenshot comparison nor a checklist was possible, `RunState.compared` is false and the run is reported as "build only".
+- Verified live on 2026-11-21 with real agents: website, file, desktop app, phone app, game, a forced second pass, and `codex`. Not exercised live: `opencode`, `gemini`, `agy`, native games, real `.apk`/`.ipa` files.
 - The UI's "Pass N of 3" assumes three passes (what the UI sends); `RunState` does not record the pass limit.
 - A custom agent command is split on whitespace, so its path cannot contain spaces.
 

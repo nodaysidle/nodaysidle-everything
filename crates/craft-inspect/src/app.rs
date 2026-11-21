@@ -29,6 +29,20 @@ fn is_package_name(s: &str) -> bool {
             .all(|p| !p.is_empty() && p.chars().all(|c| c.is_ascii_alphanumeric() || c == '_'))
 }
 
+/// The page to open for a web game: the file itself, or `index.html` in its folder.
+fn web_entry(path: &Path) -> Option<PathBuf> {
+    let is_page = |p: &Path| {
+        p.is_file()
+            && p.extension()
+                .and_then(|e| e.to_str())
+                .is_some_and(|e| e.eq_ignore_ascii_case("html") || e.eq_ignore_ascii_case("htm"))
+    };
+    if is_page(path) {
+        return Some(path.to_path_buf());
+    }
+    Some(path.join("index.html")).filter(|p| is_page(p))
+}
+
 pub async fn inspect(
     request: &CraftRequest,
     store: &EvidenceStore,
@@ -50,6 +64,12 @@ pub async fn inspect(
                     ""
                 }
             )));
+        }
+        // A web game on disk has no window to capture; render its page instead.
+        TargetLocation::Path(p) if kind == TargetKind::Game && web_entry(p).is_some() => {
+            let mut web = request.clone();
+            web.location = TargetLocation::Path(web_entry(p).expect("checked above"));
+            return crate::website::inspect(&web, store, events, run_id).await;
         }
         TargetLocation::Path(p) => p.clone(),
     };

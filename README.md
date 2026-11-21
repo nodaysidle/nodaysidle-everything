@@ -61,11 +61,24 @@ The original (blue border) above the page the agent built from the specification
 
 ![Original screenshot above the recreated page; they are identical](docs/assets/proof-original-vs-recreation.png)
 
-A harder case from the same day, `https://example.com`: Ready in one pass at 90% (build 100%, visual 82%). Advanced Mode shows where the two differ:
+Every target type went through a full live run that day:
+
+| Target | Agent | Result |
+|---|---|---|
+| Website `info.cern.ch` | `claude` | 100% |
+| Website `example.com` | `claude` | 90% |
+| Website `news.ycombinator.com` | `codex` | 96% |
+| File (a CSV) | `claude` | 100%; the script it wrote runs and totals correctly |
+| Desktop app (an open terminal window) | `claude` | 90% |
+| Phone app (a connected tablet's screen) | `claude` | 90% |
+| Game (a small web game folder) | `claude` | 100% |
+| Forced second pass (rough draft first) | `claude` | 31% on pass 1, 93% after the gaps were fixed on pass 2 |
+
+Advanced Mode shows where an original and its recreation differ, here for `example.com`:
 
 ![Advanced Mode comparison: original, recreation and difference heatmap with component scores](docs/assets/advanced-compare.png)
 
-The repository's checks at that commit: `cargo test --workspace` passes 55 tests and `cargo clippy --workspace --all-targets -- -D warnings` is clean. The tests include an end-to-end run proving that bytes internal to a binary never reach a Clean Room prompt, and that Deep mode is refused without confirmation.
+The repository's checks at that commit: `cargo test --workspace` passes 56 tests and `cargo clippy --workspace --all-targets -- -D warnings` is clean. The tests include an end-to-end run proving that bytes internal to a binary never reach a Clean Room prompt, and that Deep mode is refused without confirmation.
 
 ## How it works
 
@@ -181,7 +194,7 @@ What each target accepts:
 | Website | A URL, or a local `.html` file |
 | Desktop app | An executable, `.desktop` file or app bundle (its open window is captured), or a folder of screenshots |
 | Phone app | A package name or `.apk`/`.ipa` (the connected phone's current screen is captured; open the app first), or a folder of screenshots |
-| Game | A game folder or executable (three frames of its open window), a URL for a web game, or screenshots |
+| Game | A game folder or executable (three frames of its open window), a web game by URL or as a folder with an `index.html` (rendered), or screenshots |
 | File | Any file or folder: JSON, CSV, SQLite, zip, tar, images, text |
 
 ## How parity is scored
@@ -192,7 +205,7 @@ What each target accepts:
 | Visual | 0.4 | The output's `index.html` rendered at the original screenshot's size and compared block by block; a heatmap shows where they differ |
 | Checklist | 0.3 | Every piece of text the specification says must be visible is looked for in the result |
 
-The score is the weighted average of the signals that could be measured. A build error caps it at 50% and is listed first in the gaps. The default target is 85%, with up to three passes.
+The score is the weighted average of the signals that could be measured. When only the build could be checked, the result is labelled "build only" rather than shown as a match. A build error caps it at 50% and is listed first in the gaps. The default target is 85%, with up to three passes.
 
 ## Safety of the local server
 
