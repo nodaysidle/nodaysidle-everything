@@ -1,6 +1,6 @@
 # HANDOFF.md — Craft Anything
 
-Status handoff for **Craft Anything** in `/home/arch/dev/nodaysidle/nodaysidle-everything`.
+Status handoff for **Craft Anything** (repo `nodaysidle-everything`).
 Milestones M1–M6 are implemented (2026-11-21). 
 
 ## 1. Product goal
