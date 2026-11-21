@@ -68,6 +68,8 @@ pub async fn run_streaming(
     let mut cmd = Command::new(program);
     cmd.args(args)
         .current_dir(cwd)
+        // Some agents (OpenCode) take their project folder from $PWD, not the real cwd.
+        .env("PWD", cwd)
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())

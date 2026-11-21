@@ -1,5 +1,5 @@
 use crate::runner::{StreamKind, run_streaming};
-use crate::stream::summarize_line;
+use crate::stream::{strip_ansi, summarize_line};
 use crate::{CodingAgentKind, DetectedAgent, detect_installed_agents};
 use async_trait::async_trait;
 use craft_core::pipeline::{BuildContext, BuildOutcome};
@@ -198,10 +198,12 @@ impl BuilderPort for AgentBuilder {
                         events.log(run_id, level, "agents", message);
                     }
                 }
-                StreamKind::Stderr if !line.trim().is_empty() => {
-                    events.log(run_id, LogLevel::Debug, "agents::stderr", line);
+                StreamKind::Stderr => {
+                    let line = strip_ansi(line);
+                    if !line.trim().is_empty() {
+                        events.log(run_id, LogLevel::Debug, "agents::stderr", line);
+                    }
                 }
-                StreamKind::Stderr => {}
             },
         )
         .await?;

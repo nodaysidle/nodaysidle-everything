@@ -57,13 +57,13 @@ Weights: build 0.3, visual 0.4, checklist 0.3, averaged over the signals that co
 
 - Visual comparison only renders a static entry page. Output that needs a dev server or a build step is not rendered.
 - The checklist is text presence only; it does not exercise behaviour (clicks, forms, game rules).
-- The `agy` stream format is handled by the generic fallback, and Gemini/OpenCode output is passed through as plain lines; only the Claude and Codex parsers are format-specific.
+- Claude, Codex and `agy` have format-specific output parsers; Gemini and OpenCode output is passed through as plain lines (with terminal colour codes stripped). The runner sets `PWD` to the output folder because OpenCode takes its project folder from it.
 - Phone capture records whatever is on screen; it never launches the app. Old devices without `adb exec-out` fall back to `adb shell`.
 - Desktop/game window capture works on Hyprland (`hyprctl` + `grim`); on macOS it captures the whole screen; other Linux compositors need user-supplied screenshots.
 - Binary `Info.plist` files in IPAs yield only a strings sample. The CSV row count counts lines.
 - A game folder containing `index.html` (or an `.html` file) is studied by rendering it, through the website inspector.
 - When neither a screenshot comparison nor a checklist was possible, `RunState.compared` is false and the run is reported as "build only".
-- Verified live on 2026-11-21 with real agents: website, file, desktop app, phone app, game, a forced second pass, and `codex`. Not exercised live: `opencode`, `gemini`, `agy`, native games, real `.apk`/`.ipa` files.
+- Verified live on 2026-11-21 with real agents: website, file, desktop app, phone app, game, a forced second pass, and `codex`. `opencode` and `agy` were also run live. Not exercised live: `gemini`, native games, real `.apk`/`.ipa` files.
 - The UI's "Pass N of 3" assumes three passes (what the UI sends); `RunState` does not record the pass limit.
 - A custom agent command is split on whitespace, so its path cannot contain spaces.
 

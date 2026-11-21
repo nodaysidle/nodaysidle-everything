@@ -21,6 +21,7 @@ fn text_of<'a>(v: &'a Value, keys: &[&str]) -> Option<&'a str> {
 
 /// Returns the log entries for one line of agent stdout. Plain-text lines pass through unchanged.
 pub fn summarize_line(kind: &CodingAgentKind, line: &str) -> Vec<(LogLevel, String)> {
+    let line = strip_ansi(line);
     let line = line.trim();
     if line.is_empty() {
         return Vec::new();
@@ -28,6 +29,7 @@ pub fn summarize_line(kind: &CodingAgentKind, line: &str) -> Vec<(LogLevel, Stri
     match serde_json::from_str::<Value>(line) {
         Ok(v) if v.is_object() => match kind {
             CodingAgentKind::Codex => codex_event(&v),
+            CodingAgentKind::Agy => agy_event(&v),
             _ => claude_event(&v),
         },
         _ => vec![(LogLevel::Info, clip(line))],
@@ -175,6 +177,65 @@ fn codex_event(v: &Value) -> Vec<(LogLevel, String)> {
     }
 }
 
+/// Antigravity CLI `--output-format stream-json`: init, step_update and result events.
+fn agy_event(v: &Value) -> Vec<(LogLevel, String)> {
+    let step = &v["step_update"];
+    match v.get("event").and_then(Value::as_str) {
+        Some("init") => vec![(LogLevel::Info, "Agent session started".into())],
+        Some("step_update") if step["step_type"] == "tool" => {
+            // The first string parameter is the file, command or query the tool acts on.
+            let detail = step["tool_info"]["parameters"]
+                .as_object()
+                .and_then(|p| p.values().find_map(Value::as_str))
+                .unwrap_or("");
+            let name = text_of(step, &["tool_name"]).unwrap_or("tool");
+            match text_of(step, &["state"]) {
+                Some("ACTIVE") => vec![(LogLevel::Info, clip(&format!("→ {name} {detail}")))],
+                Some("DONE") | None => Vec::new(),
+                Some(other) => vec![(
+                    LogLevel::Warn,
+                    clip(&format!("{name} ended as {other}: {detail}")),
+                )],
+            }
+        }
+        // Reply text arrives as small deltas; the final result event carries it whole.
+        Some("step_update") => Vec::new(),
+        Some("result") => {
+            let result = &v["result"];
+            let failed = result["status"] != "SUCCESS";
+            vec![(
+                if failed { LogLevel::Error } else { LogLevel::Info },
+                clip(&format!(
+                    "Agent finished: {}",
+                    text_of(result, &["response", "status"]).unwrap_or("done")
+                )),
+            )]
+        }
+        _ => generic(v),
+    }
+}
+
+/// Removes terminal colour and cursor escape sequences from a line of agent output.
+pub fn strip_ansi(line: &str) -> String {
+    let mut out = String::with_capacity(line.len());
+    let mut chars = line.chars();
+    while let Some(c) = chars.next() {
+        if c == '\u{1b}' {
+            // CSI sequence: ESC [ parameters, ended by a letter.
+            if chars.next() == Some('[') {
+                for c in chars.by_ref() {
+                    if c.is_ascii_alphabetic() {
+                        break;
+                    }
+                }
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
 fn generic(v: &Value) -> Vec<(LogLevel, String)> {
     match text_of(v, &["message", "text", "content", "result"]) {
         Some(text) => vec![(LogLevel::Info, clip(text))],
@@ -220,9 +281,33 @@ mod tests {
     }
 
     #[test]
+    fn agy_stream_json_becomes_readable_lines() {
+        let tool = r#"{"event":"step_update","step_update":{"state":"ACTIVE","step_type":"tool","tool_name":"write_to_file","tool_info":{"name":"write_to_file","parameters":{"Path":"index.html"}}}}"#;
+        assert_eq!(messages(CodingAgentKind::Agy, tool), vec!["→ write_to_file index.html"]);
+        let done = tool.replace("ACTIVE", "DONE");
+        assert!(messages(CodingAgentKind::Agy, &done).is_empty());
+        let delta = r#"{"event":"step_update","step_update":{"state":"ACTIVE","step_type":"agent_response","text_delta":"Recre"}}"#;
+        assert!(messages(CodingAgentKind::Agy, delta).is_empty());
+        let result = r#"{"event":"result","result":{"status":"SUCCESS","response":"Built the page"}}"#;
+        assert_eq!(messages(CodingAgentKind::Agy, result), vec!["Agent finished: Built the page"]);
+        let failed = r#"{"event":"result","result":{"status":"ERROR"}}"#;
+        assert_eq!(
+            summarize_line(&CodingAgentKind::Agy, failed),
+            vec![(LogLevel::Error, "Agent finished: ERROR".to_string())]
+        );
+    }
+
+    #[test]
+    fn terminal_escape_codes_are_removed() {
+        assert_eq!(strip_ansi("\u{1b}[0m\u{1b}[91m\u{1b}[1mError: \u{1b}[0mFile not found"), "Error: File not found");
+        assert_eq!(messages(CodingAgentKind::OpenCode, "\u{1b}[0m← \u{1b}[0mWrite index.html"), vec!["← Write index.html"]);
+        assert!(summarize_line(&CodingAgentKind::OpenCode, "\u{1b}[0m").is_empty());
+    }
+
+    #[test]
     fn plain_text_and_unknown_json_do_not_get_lost() {
         assert_eq!(messages(CodingAgentKind::OpenCode, "building…"), vec!["building…"]);
-        assert_eq!(messages(CodingAgentKind::Agy, r#"{"type":"note","text":"hello"}"#), vec!["hello"]);
+        assert_eq!(messages(CodingAgentKind::Gemini, r#"{"type":"note","text":"hello"}"#), vec!["hello"]);
         assert!(summarize_line(&CodingAgentKind::Claude, "   ").is_empty());
     }
 }

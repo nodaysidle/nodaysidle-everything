@@ -25,9 +25,11 @@
   <a href="#verified-proof">Verified proof</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#clean-room-and-deep-mode">Clean Room and Deep</a> ·
+  <a href="#coding-agents">Agents</a> ·
   <a href="#install">Install</a> ·
   <a href="#use-it">Use it</a> ·
   <a href="#how-parity-is-scored">Scoring</a> ·
+  <a href="#privacy-and-security">Privacy</a> ·
   <a href="#limits">Limits</a>
 </p>
 
@@ -49,36 +51,85 @@ Two views sit on the same run:
 
 ## Verified proof
 
-A real run on 2026-11-21, started from the installed app's own window on Omarchy, with the `claude` agent, in Clean Room mode:
+Every claim here comes from a run on 2026-11-21 on Omarchy (Arch Linux, Wayland, Hyprland), started through the installed app with real coding agents. Each result was also checked by eye against the original.
+
+### 1. From the app menu to a 100% match
+
+Craft Anything was opened from the Omarchy Apps menu, and the form was filled in and started in its own window:
 
 | | |
 |---|---|
 | Target | `http://info.cern.ch` (the first website) |
 | Request | "Recreate this page faithfully as a single static index.html" |
+| Mode and agent | Clean Room, `claude` |
 | Result | Ready in one pass: build 100%, visual 100%, checklist 100% |
 
 The original (blue border) above the page the agent built from the specification (green border):
 
 ![Original screenshot above the recreated page; they are identical](docs/assets/proof-original-vs-recreation.png)
 
-Every target type went through a full live run that day:
+### 2. Every target type (5 / 5)
 
-| Target | Agent | Result |
+| Target | What was studied | Mode | Result | Checked by |
+|---|---|---|---|---|
+| Website | `info.cern.ch` | Clean Room | 100% | Screenshots side by side |
+| Website | `example.com` | Clean Room | 90% (visual 82%) | Heatmap: one-pixel text offsets only |
+| File | A CSV of stock items | Clean Room | 100% | Running the parser the agent wrote; its total is correct |
+| Desktop app | An open terminal window, captured live | Clean Room | 90% (visual 82%) | Screenshots side by side |
+| Phone app | A connected Android tablet's screen, over `adb` | Clean Room | 90% (visual 76%) | Screenshots side by side |
+| Game | A small web game folder | Clean Room | 100% | Screenshots side by side; the rebuilt game plays |
+| Game, binary | The same folder and `/usr/bin/grim` | Deep, authorized | Findings produced | Stored apart, marked not clean-room safe |
+
+For the CSV, the agent was given only the column names; the rows in its sample file are its own. That is the clean-room boundary doing its job.
+
+The tablet's screen (left), the page rebuilt from it (middle), and the difference heatmap (right):
+
+![A tablet screen of 18 keys, its recreation, and the difference heatmap](docs/assets/proof-phone.png)
+
+The web game (left), its recreation (middle), and the heatmap (right). The only difference is the falling dot, which is somewhere else because the game is running:
+
+![A small paddle game, its recreation, and the difference heatmap](docs/assets/proof-game.png)
+
+### 3. Four coding agents (4 / 4 tried)
+
+Each recreated a website through its own headless command line, with no API key supplied by Craft Anything:
+
+| Agent | Target | Result | Time |
+|---|---|---|---|
+| Claude Code (`claude`) | `info.cern.ch` | 100% in one pass | about 40 s |
+| Codex CLI (`codex`) | `news.ycombinator.com` | 96% in one pass (visual 89%) | under 3 min |
+| OpenCode (`opencode`) | `info.cern.ch` | 100% in one pass | about 20 s |
+| Antigravity (`agy`) | `info.cern.ch` | 93% in one pass (visual 82%) | about 45 s |
+
+Gemini CLI (`gemini`) is wired up the same way but has not been run live.
+
+### 4. The refinement loop
+
+To force a second pass, pass 1 was replaced with a deliberately rough draft:
+
+| Pass | Score | What happened |
 |---|---|---|
-| Website `info.cern.ch` | `claude` | 100% |
-| Website `example.com` | `claude` | 90% |
-| Website `news.ycombinator.com` | `codex` | 96% |
-| File (a CSV) | `claude` | 100%; the script it wrote runs and totals correctly |
-| Desktop app (an open terminal window) | `claude` | 90% |
-| Phone app (a connected tablet's screen) | `claude` | 90% |
-| Game (a small web game folder) | `claude` | 100% |
-| Forced second pass (rough draft first) | `claude` | 31% on pass 1, 93% after the gaps were fixed on pass 2 |
+| 1 | 31% (build 100%, visual 3%, checklist 0 of 5) | The check reported the visual mismatch and each missing piece of text |
+| 2 | 93% (build 100%, visual 82%, checklist 5 of 5) | The real agent received those gaps and rebuilt the page; the loop stopped above the 85% target |
 
 Advanced Mode shows where an original and its recreation differ, here for `example.com`:
 
 ![Advanced Mode comparison: original, recreation and difference heatmap with component scores](docs/assets/advanced-compare.png)
 
-The repository's checks at that commit: `cargo test --workspace` passes 56 tests and `cargo clippy --workspace --all-targets -- -D warnings` is clean. The tests include an end-to-end run proving that bytes internal to a binary never reach a Clean Room prompt, and that Deep mode is refused without confirmation.
+### 5. What the live runs caught
+
+Running everything for real found problems the automated tests had not, all fixed:
+
+- A privacy-hardened browser refused plain-`http` pages, so the study failed. Plain Chromium is now preferred and blocked addresses are retried over `https`.
+- OpenCode wrote its output to the wrong folder, because it takes its project folder from `$PWD`. That variable is now set for every agent.
+- Antigravity's progress was unreadable in the log. It now has its own parser.
+- A web game in a folder got no picture, because nothing was open to capture. Such folders are now rendered.
+- A result verified only by the build check read as a "100% match". It is now labelled "build only".
+- Agents wasted minutes trying to screenshot their own work. They are now told the Check stage does that.
+
+### 6. Automated checks
+
+`cargo test --workspace` passes 58 tests and `cargo clippy --workspace --all-targets -- -D warnings` is clean. The tests include end-to-end runs proving that bytes internal to a binary never reach a Clean Room prompt, that Deep mode is refused without confirmation, and that a running agent can be cancelled.
 
 ## How it works
 
@@ -113,6 +164,20 @@ flowchart LR
 | `craft-compare` | Check stage: build verification, visual similarity with a heatmap, spec checklist |
 | `craft-app` | The `craft-anything` binary and the local web UI |
 
+### Repository layout
+
+```text
+crates/
+  craft-core/      model, clean-room spec, evidence store, events, pipeline
+  craft-browser/   headless Chromium discovery and DevTools driver
+  craft-inspect/   study: website, file, desktop app, phone app, game
+  craft-agents/    agent detection, headless runner, output parsers
+  craft-compare/   check: build verification, visual diff, spec checklist
+  craft-app/       craft-anything binary, HTTP + SSE server, web UI
+packaging/         per-user installer, launcher, desktop entry, icon
+docs/assets/       screenshots used in this README
+```
+
 Every stage emits structured events. Simple Mode, Advanced Mode and the terminal output are three readers of that one stream, and each run's events and artifacts are kept on disk so past runs can be reopened.
 
 ## Clean Room and Deep mode
@@ -122,6 +187,21 @@ Every stage emits structured events. Simple Mode, Advanced Mode and the terminal
 **Deep mode is opt-in, per run.** It adds network requests, script bundles, source maps and framework fingerprints for websites; headers, sections, imports and strings for binaries; manifests and resource listings for `.apk` and `.ipa` files; engine detection and an asset catalogue for games. It runs only when you switch it on *and* confirm you are authorized to inspect the target: a dialog in the UI, `--deep --confirm-authorized` on the command line. Nothing escalates to it automatically, and its findings are stored separately and marked as not clean-room safe.
 
 Use Deep mode only on things you own or have permission to inspect.
+
+## Coding agents
+
+Craft Anything looks for these on your `PATH` and uses the first it finds, unless you pick one. Each runs headlessly in the output folder with edit permission and nothing more.
+
+| Agent | Command used |
+|---|---|
+| Claude Code | `claude --output-format stream-json --verbose --permission-mode acceptEdits -p <prompt>` |
+| Codex CLI | `codex -a never exec --json --skip-git-repo-check --sandbox workspace-write <prompt>` |
+| OpenCode | `opencode run <prompt>` |
+| Gemini CLI | `gemini --approval-mode auto_edit -p <prompt>` |
+| Antigravity | `agy --output-format stream-json --mode accept-edits -p <prompt>` |
+| Your own | `--agent "my-agent --flag"` runs `my-agent --flag <prompt>` |
+
+Claude Code, Codex and Antigravity output is parsed into readable progress lines; the others are shown as they print.
 
 ## Install
 
@@ -207,15 +287,19 @@ What each target accepts:
 
 The score is the weighted average of the signals that could be measured. When only the build could be checked, the result is labelled "build only" rather than shown as a match. A build error caps it at 50% and is listed first in the gaps. The default target is 85%, with up to three passes.
 
-## Safety of the local server
+## Privacy and security
 
-The web UI's server can start coding agents, so it is deliberately closed: it listens on `127.0.0.1`, has no cross-origin access, refuses requests addressed to any other host name, and serves agent-built previews in a sandboxed origin so their scripts cannot call it.
+- **Local-first.** The app talks to nothing but the target you point it at. Whatever your coding agent sends to its provider is between you and that agent.
+- **No telemetry, no account, no API key of its own.**
+- **Clean Room by default,** with Deep mode gated behind an explicit, per-run confirmation.
+- **A closed local server.** The web UI's server can start coding agents, so it listens on `127.0.0.1`, allows no cross-origin access, refuses requests addressed to any other host name, and serves agent-built previews in a sandboxed origin so their scripts cannot call it.
+- **Passive capture.** Studying an app or a phone never launches, installs, taps or changes anything, and never executes the target.
 
 ## Limits
 
 - The visual check renders a static entry page. Output that needs a dev server or a build step is not rendered.
 - The checklist confirms that expected text is present. It does not click through behaviour.
-- Agent output is parsed into readable lines for Claude Code and Codex; other agents' output is shown as plain lines.
+- Gemini CLI has not been run live.
 - Window capture works on Hyprland; on macOS it captures the whole screen; elsewhere, pass screenshots.
 - Phone capture records whatever is on the screen and never launches or changes anything on the device.
 - By default the output folder lives under the runs folder. If that is inside another project, your agent will pick up that project's instructions; use `--output-dir` to choose somewhere else.
