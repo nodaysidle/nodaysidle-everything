@@ -57,7 +57,7 @@ Every claim here comes from a run on 2026-11-21 on Omarchy (Arch Linux, Wayland,
 
 Craft Anything was opened from the Omarchy Apps menu, and the form was filled in and started in its own window:
 
-| | |
+| Run | Details |
 |---|---|
 | Target | `http://info.cern.ch` (the first website) |
 | Request | "Recreate this page faithfully as a single static index.html" |
@@ -112,9 +112,9 @@ To force a second pass, pass 1 was replaced with a deliberately rough draft:
 | 1 | 31% (build 100%, visual 3%, checklist 0 of 5) | The check reported the visual mismatch and each missing piece of text |
 | 2 | 93% (build 100%, visual 82%, checklist 5 of 5) | The real agent received those gaps and rebuilt the page; the loop stopped above the 85% target |
 
-Advanced Mode shows where an original and its recreation differ, here for `example.com`:
+Advanced Mode shows where an original and its recreation differ. Here the `agy` page looks the same but sits a few pixels lower, which the heatmap marks and the visual score counts:
 
-![Advanced Mode comparison: original, recreation and difference heatmap with component scores](docs/assets/advanced-compare.png)
+![Advanced Mode compare tab: original, recreation and difference heatmap, with build, visual and checklist scores and the resulting gap](docs/assets/advanced-compare.png)
 
 ### 5. What the live runs caught
 
@@ -134,25 +134,17 @@ Running everything for real found problems the automated tests had not, all fixe
 ## How it works
 
 ```mermaid
-flowchart LR
-    T[Target<br>website · app · phone · game · file] --> S
-    subgraph Study
-      S[Inspectors] --> E[(Evidence store)]
-      S --> SPEC[Clean-room spec]
-    end
-    SPEC --> B
+flowchart TD
+    T["Target: website, app, phone, game or file"] --> S[Study: inspectors]
+    S --> E[(Evidence store)]
+    S --> SPEC[Clean-room spec]
     P[Your plain-English request] --> B
-    subgraph Build
-      B[Your coding agent<br>headless, in the output folder]
-    end
+    SPEC --> B["Build: your coding agent, headless, in the output folder"]
     B --> O[Recreation]
-    O --> C
+    O --> C["Check: build check, visual diff, spec checklist"]
     E --> C
-    subgraph Check
-      C[Build check · visual diff · spec checklist]
-    end
-    C -- "below target: gaps" --> B
-    C -- "at target or out of passes" --> R[Ready]
+    C -- "below target: gaps go back" --> B
+    C -- "at target, or out of passes" --> R([Ready])
 ```
 
 | Crate | Role |
