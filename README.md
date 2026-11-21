@@ -193,7 +193,17 @@ Claude Code, Codex and Antigravity output is parsed into readable progress lines
 
 ## Install
 
-Requirements: Rust and Cargo, a Chromium-family browser (Chromium, Chrome, or `npx playwright install chromium`), and at least one coding agent for real runs.
+Requirements: a Chromium-family browser (Chromium, Chrome, or `npx playwright install chromium`), and at least one coding agent for real runs.
+
+**From the release (Linux x86_64, no Rust needed):**
+
+```bash
+curl -LO https://github.com/nodaysidle/nodaysidle-everything/releases/download/v0.1.0/craft-anything-0.1.0-linux-x86_64.tar.gz
+tar xzf craft-anything-0.1.0-linux-x86_64.tar.gz
+craft-anything-0.1.0/packaging/install.sh
+```
+
+**From source (needs Rust and Cargo):**
 
 ```bash
 git clone https://github.com/nodaysidle/nodaysidle-everything.git
@@ -201,7 +211,7 @@ cd nodaysidle-everything
 packaging/install.sh
 ```
 
-That builds the release binary and installs, for your user only:
+Either way it installs, for your user only:
 
 - `~/.local/bin/craft-anything`, the program
 - `~/.local/bin/craft-anything-app`, a launcher that starts the local server and opens the UI as an app window

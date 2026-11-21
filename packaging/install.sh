@@ -14,8 +14,14 @@ if [[ ${1-} == --uninstall ]]; then
   exit 0
 fi
 
-cargo build --release -p craft-app
-install -Dm755 target/release/craft-anything "$bin/craft-anything"
+# A release tarball ships the binary beside this folder; a git checkout builds it.
+if [[ -x craft-anything ]]; then
+  built=craft-anything
+else
+  cargo build --release -p craft-app
+  built=target/release/craft-anything
+fi
+install -Dm755 "$built" "$bin/craft-anything"
 install -Dm755 packaging/craft-anything-app "$bin/craft-anything-app"
 install -Dm644 packaging/craft-anything.desktop "$apps/craft-anything.desktop"
 install -Dm644 packaging/craft-anything.svg "$icons/craft-anything.svg"
