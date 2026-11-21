@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Craft Anything
+GenericName=Clean-room recreation studio
+Comment=Study a website, app, game or file and rebuild it with your own coding agent
+Exec=craft-anything-app
+Icon=craft-anything
+Terminal=false
+Categories=Development;Utility;
+Keywords=craft;recreate;clone;rebuild;agent;clean room;
+StartupNotify=true

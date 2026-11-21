@@ -1,5 +1,4 @@
 # Universal Rules & Secrets
-# OS & Editor metadata
 .DS_Store
 Thumbs.db
 *.swp
@@ -14,48 +13,22 @@ Thumbs.db
 *.pem
 *.key
 
-# Logs & Temp
+# Logs, Temp & Local Runs
 *.log
 tmp/
 .cache/
+.craft-runs/
 
 # Trail-Code & AI Agent local cache
-graft/
+/graft/
 .ship-out/
 
-# Python Stack
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-env/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-dist/
-build/
-*.egg-info/
-*.db
-*.sqlite
-*.sqlite3
-
-# Web / Node.js Stack
-# Web & Node
-node_modules/
-.next/
-.nuxt/
-.output/
-.vercel/
-.turbo/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
+# Rust Stack
+/target/
+**/*.rs.bk
+*.pdb
 
 # Media & Binary Artifacts
-# Heavy media & binary packages
 *.mp4
 *.mov
 *.avi

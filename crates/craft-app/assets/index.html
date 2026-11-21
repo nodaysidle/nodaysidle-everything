@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Craft Anything</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0e1014; --panel: #161920; --panel2: #1c2029; --border: #2a2f3b;
+  --text: #e7e9ef; --muted: #98a0b0; --accent: #7ea6ff; --accent-fg: #0b1020;
+  --ok: #4cc38a; --warn: #e3b546; --err: #f2766f; --deep: #d79cf0;
+  --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f8; --panel: #ffffff; --panel2: #eef0f4; --border: #d8dce4;
+    --text: #1b1f27; --muted: #5d6575; --accent: #2f5fd0; --accent-fg: #ffffff;
+    --ok: #1f8a57; --warn: #9a6a00; --err: #c23b33; --deep: #8a3cb0;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+h1, h2, h3 { margin: 0; line-height: 1.25; }
+h2 { font-size: 1.05rem; }
+h3 { font-size: .95rem; margin: 18px 0 6px; }
+ul { margin: 4px 0; padding-left: 20px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.muted { color: var(--muted); }
+.wrap { overflow-wrap: anywhere; }
+
+header.top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--border); }
+header.top h1 { font-size: 1.1rem; margin-right: auto; }
+.live { font-size: .8rem; color: var(--warn); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; padding: 6px 14px;
+  border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); cursor: pointer; text-decoration: none; }
+.btn:hover { border-color: var(--accent); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.btn.danger { color: var(--err); }
+.btn.small { min-height: 30px; padding: 3px 10px; font-size: .85rem; }
+.switch { display: inline-flex; align-items: center; gap: 8px; background: none; border: 0; cursor: pointer; padding: 4px; }
+.switch .track { width: 34px; height: 20px; border-radius: 10px; background: var(--border); position: relative; flex: none; }
+.switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--text); transition: left .15s; }
+.switch[aria-checked="true"] .track, .switch[aria-pressed="true"] .track { background: var(--accent); }
+.switch[aria-checked="true"] .track::after, .switch[aria-pressed="true"] .track::after { left: 17px; background: var(--accent-fg); }
+
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: .75rem; font-weight: 600; border: 1px solid currentColor; white-space: nowrap; }
+.badge.clean { color: var(--ok); }
+.badge.deep { color: var(--deep); }
+.pill { font-size: .72rem; padding: 1px 8px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--border); white-space: nowrap; }
+.pill.running { color: var(--accent); } .pill.ready { color: var(--ok); } .pill.failed { color: var(--err); } .pill.cancelled { color: var(--warn); }
+
+.app { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: calc(100vh - 57px); }
+aside.history { border-right: 1px solid var(--border); padding: 16px 12px; background: var(--panel); }
+aside.history ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.hist { width: 100%; text-align: left; display: grid; gap: 2px; padding: 8px 10px; border-radius: 8px; border: 1px solid transparent; background: none; cursor: pointer; }
+.hist:hover { background: var(--panel2); }
+.hist[aria-current="true"] { border-color: var(--accent); background: var(--panel2); }
+.hist .row { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.hist .prompt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .85rem; }
+.hist .meta { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+main { padding: 20px; display: grid; gap: 18px; align-content: start; max-width: 1360px; width: 100%; margin-inline: auto; }
+
+.panel { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; min-width: 0; }
+.panel > header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.panel > header h2 { margin-right: auto; }
+.notice { padding: 10px 14px; border-radius: 8px; border: 1px solid var(--err); color: var(--err); display: flex; gap: 10px; align-items: start; justify-content: space-between; }
+
+fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+legend, .label { font-weight: 600; font-size: .9rem; margin-bottom: 6px; padding: 0; display: block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.card { position: relative; cursor: pointer; }
+.card input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.card span { display: block; height: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); }
+.card b { display: block; font-size: .92rem; }
+.card small { color: var(--muted); font-size: .78rem; }
+.card input:checked + span { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.card input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field { display: grid; gap: 4px; margin-top: 14px; }
+.field input[type=text], .field textarea, .field select { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); }
+.field textarea { min-height: 80px; resize: vertical; }
+.hint { font-size: .8rem; color: var(--muted); }
+.row-opts { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; margin-top: 16px; }
+.check { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
+.form-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 18px; }
+.error { color: var(--err); }
+
+.run-title { font-weight: 600; overflow-wrap: anywhere; }
+.steps { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0; margin: 16px 0 12px; counter-reset: s; }
+.steps li { counter-increment: s; padding: 10px 6px 0; border-top: 4px solid var(--border); color: var(--muted); font-size: .85rem; min-width: 0; }
+.steps li b { display: block; font-size: .95rem; }
+.steps li b::before { content: counter(s) ". "; }
+.steps li.done { border-color: var(--ok); color: var(--text); }
+.steps li.active { border-color: var(--accent); color: var(--text); }
+.steps li.stopped { border-color: var(--err); color: var(--text); }
+.status-line { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; }
+.status-text { font-size: 1.05rem; overflow-wrap: anywhere; }
+.meter { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.meter .bar { height: 10px; border-radius: 5px; background: var(--panel2); border: 1px solid var(--border); overflow: hidden; }
+.meter .fill { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.meter strong { font-variant-numeric: tabular-nums; min-width: 3.5em; text-align: right; }
+.run-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+
+.tabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; border-bottom: 1px solid var(--border); margin: -4px 0 14px; }
+.tabs button { flex: none; white-space: nowrap; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 10px; cursor: pointer; color: var(--muted); }
+.tabs button[aria-selected="true"] { color: var(--text); border-color: var(--accent); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-bottom: 10px; font-size: .85rem; }
+.toolbar fieldset { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
+.toolbar legend { float: left; margin: 0 4px 0 0; font-size: .85rem; }
+.log { font: .8rem/1.45 var(--mono); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; height: 420px; overflow: auto; padding: 8px; }
+.line { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr); gap: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.line .lv { text-transform: uppercase; font-weight: 600; }
+.lvl-warn .lv { color: var(--warn); } .lvl-error .lv, .lvl-error .msg { color: var(--err); } .lvl-debug { color: var(--muted); }
+.line .src, .line time { color: var(--muted); }
+.line.stage { display: block; margin: 8px 0 4px; padding: 3px 8px; border-left: 3px solid var(--accent); background: var(--panel2); font-weight: 600; }
+.hide-lvl-info .lvl-info, .hide-lvl-warn .lvl-warn, .hide-lvl-error .lvl-error, .hide-lvl-debug .lvl-debug,
+.hide-src-inspect .src-inspect, .hide-src-agents .src-agents, .hide-src-compare .src-compare, .hide-src-pipeline .src-pipeline { display: none; }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.thumb { display: grid; gap: 6px; padding: 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel2); cursor: pointer; text-align: left; }
+.thumb img { width: 100%; aspect-ratio: 4/3; object-fit: cover; object-position: top; border-radius: 4px; background: var(--bg); }
+.thumb span { font-size: .78rem; overflow-wrap: anywhere; }
+.evlist { list-style: none; padding: 0; margin: 14px 0 0; display: grid; gap: 4px; }
+.evlist button { width: 100%; display: flex; gap: 10px; justify-content: space-between; align-items: center; text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--panel2); cursor: pointer; }
+.evlist .k { font: .75rem var(--mono); color: var(--muted); white-space: nowrap; }
+.tag-deep { color: var(--deep); font-weight: 700; font-size: .72rem; border: 1px solid currentColor; border-radius: 4px; padding: 0 5px; margin-left: 6px; }
+
+.passes { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.passes button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+figure { margin: 0; display: grid; gap: 6px; align-content: start; }
+figcaption { font-size: .82rem; color: var(--muted); }
+figure button { padding: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); cursor: zoom-in; }
+figure img { display: block; width: 100%; max-height: 420px; object-fit: contain; object-position: top; }
+.empty { display: grid; place-items: center; min-height: 140px; border: 1px dashed var(--border); border-radius: 8px; color: var(--muted); font-size: .85rem; text-align: center; padding: 12px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .87rem; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; overflow-wrap: break-word; }
+td:last-child { overflow-wrap: anywhere; }
+th { color: var(--muted); font-weight: 600; }
+td.ok { color: var(--ok); } td.bad { color: var(--err); }
+dl.kv { display: grid; grid-template-columns: minmax(90px, max-content) minmax(0, 1fr); gap: 4px 14px; margin: 4px 0; font-size: .88rem; }
+dl.kv dt { color: var(--muted); overflow-wrap: anywhere; } dl.kv dd { margin: 0; overflow-wrap: anywhere; }
+pre.text { font: .8rem/1.45 var(--mono); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 520px; overflow: auto; margin: 8px 0 0; }
+details summary { cursor: pointer; margin-top: 14px; color: var(--muted); }
+.req { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+.req code { font: .75rem var(--mono); color: var(--muted); }
+
+dialog { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); color: var(--text); padding: 20px; width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); }
+dialog.wide { width: min(1100px, calc(100vw - 24px)); }
+dialog::backdrop { background: rgb(0 0 0 / .55); }
+dialog h2 { margin-bottom: 10px; }
+dialog .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+dialog img { max-width: 100%; display: block; margin: 0 auto; }
+
+@media (max-width: 860px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  aside.history { order: 2; border-right: 0; border-top: 1px solid var(--border); }
+  main { padding: 12px; }
+  .panel { padding: 14px; }
+  header.top { padding: 8px 12px; }
+}
+@media (max-width: 520px) {
+  .steps { grid-template-columns: repeat(2, 1fr); row-gap: 12px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .line { grid-template-columns: auto auto minmax(0, 1fr); }
+  .line time { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Craft Anything</h1>
+  <span id="live" class="live" role="status"></span>
+  <span id="depthBadge" class="badge clean" title="Only visible, observable behavior is studied">Clean Room</span>
+  <button id="modeToggle" class="switch" type="button" aria-pressed="false"><span class="track" aria-hidden="true"></span>Advanced mode</button>
+</header>
+
+<div class="app">
+  <aside class="history" aria-labelledby="histTitle">
+    <h2 id="histTitle">Run history</h2>
+    <p id="histEmpty" class="muted">No runs yet.</p>
+    <ol id="histList"></ol>
+  </aside>
+
+  <main>
+    <div id="notice" class="notice" role="alert" hidden><span id="noticeText" class="wrap"></span><button class="btn small" type="button" id="noticeClose">Dismiss</button></div>
+
+    <section class="panel" id="runPanel" aria-labelledby="runTitle" hidden>
+      <header>
+        <h2 id="runTitle" class="run-title"></h2>
+        <span id="runDepth" class="badge clean"></span>
+      </header>
+      <p id="runPrompt" class="muted wrap" style="margin:0"></p>
+      <ol class="steps" id="steps" aria-label="Progress">
+        <li data-stage="study"><b>Study</b>Look at the original</li>
+        <li data-stage="build"><b>Build</b>Your agent rebuilds it</li>
+        <li data-stage="check"><b>Check</b>Compare with the original</li>
+        <li data-stage="ready"><b>Ready</b>Review the result</li>
+      </ol>
+      <div class="status-line">
+        <span id="statusText" class="status-text" aria-live="polite"></span>
+        <span id="passText" class="muted"></span>
+      </div>
+      <div class="meter">
+        <div class="bar" role="progressbar" id="meterBar" aria-label="Parity with the original" aria-valuemin="0" aria-valuemax="100"><div class="fill" id="meterFill"></div></div>
+        <strong id="meterText">--</strong>
+      </div>
+      <div class="run-actions">
+        <button class="btn danger" type="button" id="cancelBtn" hidden>Cancel</button>
+        <button class="btn" type="button" id="openBtn" hidden>Open output folder</button>
+        <a class="btn" id="previewLink" target="_blank" rel="noopener noreferrer" hidden>Preview</a>
+        <span id="actionMsg" class="muted wrap" role="status"></span>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="newTitle">
+      <header><h2 id="newTitle">What do you want to recreate?</h2></header>
+      <form id="form" novalidate>
+        <fieldset>
+          <legend>Target type</legend>
+          <div class="cards">
+            <label class="card"><input type="radio" name="kind" value="website" checked><span><b>Website</b><small>A page or site by URL</small></span></label>
+            <label class="card"><input type="radio" name="kind" value="desktop_app"><span><b>Desktop App</b><small>An app, binary or screenshots</small></span></label>
+            <label class="card"><input type="radio" name="kind" value="phone_app"><span><b>Phone App</b><small>An .apk, package or screenshots</small></span></label>
+            <label class="card"><input type="radio" name="kind" value="game"><span><b>Game</b><small>A game folder, executable or URL</small></span></label>
+            <label class="card"><input type="radio" name="kind" value="file"><span><b>File</b><small>A document, config or data file</small></span></label>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label class="label" for="source" id="sourceLabel">Website URL</label>
+          <input type="text" id="source" required autocomplete="off" spellcheck="false" aria-describedby="sourceHint">
+          <span class="hint" id="sourceHint"></span>
+        </div>
+        <div class="field">
+          <label class="label" for="prompt">Describe it in plain English</label>
+          <textarea id="prompt" required placeholder="e.g. Recreate the landing page with the same layout, colors and sign-up form."></textarea>
+        </div>
+        <div class="field">
+          <label class="label" for="agent">Coding agent</label>
+          <select id="agent"><option value="">Auto-detect (recommended)</option><option value="__custom">Custom command...</option></select>
+          <input type="text" id="customAgent" hidden placeholder="Command to run, e.g. my-agent --yes" aria-label="Custom agent command" spellcheck="false">
+        </div>
+        <div class="row-opts">
+          <label class="check"><input type="checkbox" id="dryRun"> Dry run <span class="hint">(prepare everything, skip the agent)</span></label>
+          <button id="deepToggle" class="switch" type="button" role="switch" aria-checked="false" aria-describedby="deepHint"><span class="track" aria-hidden="true"></span>Deep Mode</button>
+          <span id="deepHint" class="hint">Off: Clean Room studies only what is visible.</span>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" id="startBtn">Start</button>
+          <span id="formError" class="error wrap" role="alert"></span>
+        </div>
+      </form>
+    </section>
+
+
+    <section class="panel" id="advPanel" aria-label="Advanced" hidden>
+      <div class="tabs" role="tablist" id="tabs" aria-label="Advanced views">
+        <button role="tab" data-tab="logs">Logs</button>
+        <button role="tab" data-tab="evidence">Evidence</button>
+        <button role="tab" data-tab="compare">Compare</button>
+        <button role="tab" data-tab="spec">Spec</button>
+        <button role="tab" data-tab="deep" hidden>Deep Findings</button>
+        <button role="tab" data-tab="agentlog">Agent log</button>
+        <button role="tab" data-tab="history">Passes</button>
+        <button role="tab" data-tab="tools">Tools</button>
+      </div>
+      <div role="tabpanel" id="tab-logs">
+        <div class="toolbar">
+          <fieldset id="lvlFilter"><legend>Level</legend></fieldset>
+          <fieldset id="srcFilter"><legend>Source</legend></fieldset>
+          <label class="check"><input type="checkbox" id="autoscroll" checked> Autoscroll</label>
+        </div>
+        <div id="log" class="log" role="log" aria-live="off" tabindex="0"></div>
+      </div>
+      <div role="tabpanel" id="tab-other" hidden></div>
+    </section>
+  </main>
+</div>
+
+<dialog id="deepDialog" aria-labelledby="deepTitle">
+  <form method="dialog" id="deepForm">
+    <h2 id="deepTitle">Turn on Deep Mode?</h2>
+    <p>Clean Room mode (the default) studies only what the target visibly does. <strong>Deep Mode also inspects its internals</strong>: web bundles and scripts, binaries and their symbols, and package contents.</p>
+    <p>Only do this for something you own or are explicitly permitted to inspect. Findings are kept separate and marked "Deep".</p>
+    <label class="check"><input type="checkbox" id="authBox"> I am authorized to inspect this target</label>
+    <div class="field">
+      <label class="label" for="authReason">Reason (optional)</label>
+      <input type="text" id="authReason" placeholder="e.g. Our own app; licensed for analysis">
+    </div>
+    <div class="actions">
+      <button class="btn" value="cancel" type="submit">Keep Clean Room</button>
+      <button class="btn primary" value="confirm" type="submit" id="deepConfirm" disabled>Enable Deep Mode</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="viewer" class="wide" aria-labelledby="viewerTitle">
+  <h2 id="viewerTitle" class="wrap"></h2>
+  <div id="viewerBody"></div>
+  <form method="dialog" class="actions"><button class="btn" type="submit">Close</button></form>
+</dialog>
+
+<script>
+'use strict';
+const MAX_PASSES = 3, MAX_LOG = 2000;
+const STAGES = ['study', 'build', 'check', 'ready'];
+const LEVELS = ['info', 'warn', 'error', 'debug'];
+const SOURCES = ['inspect', 'agents', 'compare', 'pipeline'];
+const KIND = { website: 'Website', desktop_app: 'Desktop App', phone_app: 'Phone App', game: 'Game', file: 'File' };
+const SOURCE_HELP = {
+  website: ['Website URL', 'https://example.com', 'The public address of the site to study.'],
+  desktop_app: ['App, binary or screenshot folder', '/Applications/Notes.app or ~/shots/notes/', 'Path to the installed app or binary, or a folder of screenshots.'],
+  phone_app: ['APK, package name or screenshot folder', '~/apps/app.apk or com.example.app', 'An .apk file, an installed package name, or a folder of screenshots.'],
+  game: ['Game folder, executable or URL', '~/games/my-game/ or https://example.com/play', 'The game folder or executable, or a URL for a web game.'],
+  file: ['File path', '~/Documents/report.pdf', 'The file to recreate.'],
+};
+const S = { runs: [], sel: null, run: null, evidence: [], status: '', loading: false, pending: [],
+  deep: false, deepReason: '', mode: 'simple', tab: 'logs', pass: null, cache: new Map(), preview: {}, doctor: null };
+const $ = id => document.getElementById(id);
+
+// Builds DOM safely: string children become text nodes, never markup.
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c instanceof Node ? c : String(c));
+  return el;
+}
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  let body = null;
+  try { body = await res.json(); } catch {}
+  if (!res.ok) throw new Error((body && body.message) || `${res.status} ${res.statusText}`.trim());
+  return body;
+}
+const post = (path, data) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data || {}) });
+const runUrl = (id, rest = '') => `/api/runs/${encodeURIComponent(id)}${rest}`;
+const fileUrl = (id, rel) => runUrl(id, '/' + String(rel).split(/[\\/]/).map(encodeURIComponent).join('/'));
+const pct = s => (typeof s === 'number' ? Math.round(s * 100) + '%' : '--');
+const isImage = e => /\.(png|jpe?g|gif|webp|svg)$/i.test(e.relative_path);
+const evById = id => S.evidence.findLast(e => e.id === id); // newest wins if an id repeats
+function ago(t) {
+  const s = (Date.now() - new Date(t)) / 1000;
+  if (!(s >= 0)) return '';
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s / 60) + ' min ago';
+  if (s < 86400) return Math.floor(s / 3600) + ' h ago';
+  return new Date(t).toLocaleDateString();
+}
+function notice(msg) { $('noticeText').textContent = msg; $('notice').hidden = !msg; }
+$('noticeClose').onclick = () => notice('');
+
+// Artifact fetch with a per-run cache; JSON is parsed when possible.
+function artifact(item) {
+  const url = fileUrl(S.sel, item.relative_path);
+  if (!S.cache.has(url)) S.cache.set(url, fetch(url).then(async r => {
+    if (!r.ok) throw new Error(`Could not load ${item.label} (${r.status})`);
+    const text = await r.text();
+    try { return { text, json: JSON.parse(text) }; } catch { return { text, json: null }; }
+  }).catch(e => { S.cache.delete(url); throw e; }));
+  return S.cache.get(url);
+}
+
+/* ---------- form ---------- */
+const form = $('form');
+function updateSourceHelp() {
+  const [label, ph, hint] = SOURCE_HELP[form.kind.value];
+  $('sourceLabel').textContent = label; $('source').placeholder = ph; $('sourceHint').textContent = hint;
+}
+form.addEventListener('change', e => { if (e.target.name === 'kind') updateSourceHelp(); });
+$('agent').onchange = () => { const c = $('agent').value === '__custom'; $('customAgent').hidden = !c; if (c) $('customAgent').focus(); };
+
+function setDeep(on, reason = '') {
+  S.deep = on; S.deepReason = on ? reason : '';
+  $('deepToggle').setAttribute('aria-checked', String(on));
+  $('deepHint').textContent = on ? 'On: this run will also inspect internals (authorized).' : 'Off: Clean Room studies only what is visible.';
+  const b = $('depthBadge');
+  b.textContent = on ? 'Deep Mode' : 'Clean Room';
+  b.className = 'badge ' + (on ? 'deep' : 'clean');
+}
+$('deepToggle').onclick = () => {
+  if (S.deep) return setDeep(false);
+  $('authBox').checked = false; $('authReason').value = ''; $('deepConfirm').disabled = true;
+  $('deepDialog').showModal();
+};
+$('authBox').onchange = () => { $('deepConfirm').disabled = !$('authBox').checked; };
+$('deepDialog').addEventListener('close', () => {
+  // Deep turns on only from the confirm button with the authorization box ticked.
+  if ($('deepDialog').returnValue === 'confirm' && $('authBox').checked) setDeep(true, $('authReason').value.trim());
+  $('deepDialog').returnValue = '';
+  $('deepToggle').focus();
+});
+
+form.onsubmit = async e => {
+  e.preventDefault();
+  const source = $('source').value.trim(), prompt = $('prompt').value.trim();
+  const custom = $('agent').value === '__custom';
+  const agent = custom ? $('customAgent').value.trim() : $('agent').value;
+  const err = !source ? 'Enter where the target is.' : !prompt ? 'Describe what you want to recreate.' : custom && !agent ? 'Enter the custom agent command.' : '';
+  $('formError').textContent = err;
+  if (err) return (!source ? $('source') : !prompt ? $('prompt') : $('customAgent')).focus();
+  const deep = S.deep === true;
+  const payload = { target_kind: form.kind.value, source, prompt, preferred_agent: agent || null,
+    dry_run: $('dryRun').checked, max_iterations: MAX_PASSES, deep, confirm_authorized: deep };
+  if (deep && S.deepReason) payload.authorization_reason = S.deepReason;
+  $('startBtn').disabled = true;
+  try {
+    const res = await post('/api/runs', payload);
+    setDeep(false);
+    await loadRuns();
+    await selectRun(res.run_id);
+    $('runPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (ex) {
+    $('formError').textContent = 'Could not start: ' + ex.message;
+  } finally { $('startBtn').disabled = false; }
+};
+
+async function loadAgents() {
+  try {
+    const agents = await api('/api/agents');
+    const custom = $('agent').lastElementChild;
+    for (const a of agents) $('agent').insertBefore(h('option', { value: a.binary }, `${a.binary} (${a.kind})`), custom);
+    if (!agents.length) $('agent').firstElementChild.textContent = 'Auto-detect (no agents found)';
+  } catch (e) { notice('Could not list coding agents: ' + e.message); }
+}
+
+/* ---------- history ---------- */
+async function loadRuns() {
+  try { S.runs = await api('/api/runs'); renderHistory(); }
+  catch (e) { notice('Could not load run history: ' + e.message); }
+}
+function renderHistory() {
+  $('histEmpty').hidden = S.runs.length > 0;
+  $('histList').replaceChildren(...S.runs.map(r => {
+    const loc = String(r.request.location.value || '');
+    const name = loc.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || loc;
+    return h('li', null, h('button', { class: 'hist', type: 'button', 'aria-current': r.id === S.sel ? 'true' : null, onclick: () => selectRun(r.id) },
+      h('span', { class: 'row' }, h('b', null, KIND[r.request.target_kind] || r.request.target_kind), h('span', { class: 'pill ' + r.status }, r.status)),
+      h('span', { class: 'prompt' }, r.request.prompt),
+      h('span', { class: 'meta' }, [name, r.latest_parity_score != null ? pct(r.latest_parity_score) : null, ago(r.created_at)].filter(Boolean).join(' · '))));
+  }));
+}
+let runsTimer;
+const refreshRunsSoon = () => { clearTimeout(runsTimer); runsTimer = setTimeout(loadRuns, 300); };
+
+/* ---------- selected run ---------- */
+async function selectRun(id) {
+  Object.assign(S, { sel: id, run: null, evidence: [], status: '', loading: true, pending: [], pass: null });
+  S.cache.clear();
+  $('log').replaceChildren(); $('actionMsg').textContent = '';
+  renderHistory(); render();
+  try {
+    const [run, evidence, events] = await Promise.all([api(runUrl(id)), api(runUrl(id, '/evidence')), api(runUrl(id, '/events'))]);
+    if (S.sel !== id) return;
+    S.run = run; S.evidence = evidence;
+    const seen = new Set();
+    for (const ev of events) { seen.add(JSON.stringify(ev)); ingest(ev, false); }
+    for (const ev of S.pending) if (!seen.has(JSON.stringify(ev))) ingest(ev, true);
+  } catch (e) {
+    if (S.sel === id) notice('Could not load this run: ' + e.message);
+  } finally {
+    if (S.sel === id) { S.loading = false; S.pending = []; render(); }
+  }
+}
+async function refreshRun() {
+  const id = S.sel;
+  if (!id) return;
+  try {
+    const [run, evidence] = await Promise.all([api(runUrl(id)), api(runUrl(id, '/evidence'))]);
+    if (S.sel !== id) return;
+    S.run = run; S.evidence = evidence; render();
+  } catch (e) { notice('Could not refresh this run: ' + e.message); }
+}
+let runTimer;
+const refreshRunSoon = () => { clearTimeout(runTimer); runTimer = setTimeout(refreshRun, 150); };
+
+function ingest(ev, live) {
+  const k = ev.kind || {};
+  if (k.type === 'stage_changed' || k.type === 'finished') S.status = k.message || S.status;
+  if (live && S.run) {
+    if (k.type === 'stage_changed') S.run.stage = k.stage;
+    if (k.type === 'parity_evaluated') S.run.latest_parity_score = k.score;
+    if (k.type === 'finished') S.run.status = k.status || (k.ready ? 'ready' : 'failed');
+  }
+  appendLog(ev);
+}
+
+function render() { renderRun(); renderAdvanced(); }
+
+function renderRun() {
+  const r = S.run;
+  $('runPanel').hidden = !S.sel;
+  if (!S.sel) return;
+  if (!r) { $('runTitle').textContent = 'Loading run...'; $('runPrompt').textContent = ''; return; }
+  const loc = r.request.location.value;
+  $('runTitle').textContent = `${KIND[r.request.target_kind] || r.request.target_kind}: ${loc}`;
+  $('runPrompt').textContent = r.request.prompt;
+  const deep = r.request.depth && r.request.depth.mode === 'deep';
+  $('runDepth').textContent = deep ? 'Deep' : 'Clean Room';
+  $('runDepth').className = 'badge ' + (deep ? 'deep' : 'clean');
+
+  const running = r.status === 'running', idx = STAGES.indexOf(r.stage);
+  for (const li of $('steps').children) {
+    const i = STAGES.indexOf(li.dataset.stage);
+    li.className = r.status === 'ready' || i < idx ? 'done' : i === idx ? (running ? 'active' : 'stopped') : '';
+    if (i === idx) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+  }
+  const n = r.current_iteration;
+  $('passText').textContent = running && n > 0 && (r.stage === 'build' || r.stage === 'check')
+    ? `Pass ${n}${n <= MAX_PASSES ? ' of ' + MAX_PASSES : ''}`
+    : !running && r.iterations.length ? `${r.iterations.length} pass${r.iterations.length > 1 ? 'es' : ''}` : '';
+  const fallback = { running: 'Starting...', ready: 'Ready', failed: 'Failed', cancelled: 'Cancelled' }[r.status];
+  $('statusText').textContent = r.status === 'failed' ? (r.error || S.status || fallback) : (S.status || fallback);
+  $('statusText').className = 'status-text' + (r.status === 'failed' ? ' error' : '');
+
+  const score = r.latest_parity_score;
+  $('meterFill').style.width = typeof score === 'number' ? Math.max(0, Math.min(100, score * 100)) + '%' : '0';
+  $('meterText').textContent = pct(score);
+  if (typeof score === 'number') $('meterBar').setAttribute('aria-valuenow', Math.round(score * 100));
+  else $('meterBar').removeAttribute('aria-valuenow');
+
+  $('cancelBtn').hidden = !running;
+  $('openBtn').hidden = running;
+  const id = r.id;
+  const pv = S.preview[id];
+  $('previewLink').hidden = running || pv !== true;
+  $('previewLink').href = runUrl(id, '/output/index.html');
+  if (!running && pv === undefined) {
+    S.preview[id] = 'checking';
+    fetch(runUrl(id, '/output/index.html'), { method: 'HEAD' })
+      .then(res => { S.preview[id] = res.ok; }, () => { delete S.preview[id]; })
+      .then(() => { if (S.sel === id) renderRun(); });
+  }
+}
+$('cancelBtn').onclick = async () => {
+  $('cancelBtn').disabled = true;
+  try { await post(runUrl(S.sel, '/cancel')); $('actionMsg').textContent = 'Cancelling...'; }
+  catch (e) { $('actionMsg').textContent = 'Could not cancel: ' + e.message; refreshRunSoon(); }
+  finally { $('cancelBtn').disabled = false; }
+};
+$('openBtn').onclick = async () => {
+  try { await post(runUrl(S.sel, '/open')); $('actionMsg').textContent = 'Opened in your file manager.'; }
+  catch (e) { $('actionMsg').textContent = e.message; }
+};
+
+/* ---------- live events ---------- */
+let es;
+function connect() {
+  es = new EventSource('/api/events');
+  es.onopen = () => { $('live').textContent = ''; loadRuns(); refreshRun(); };
+  es.onerror = () => {
+    $('live').textContent = 'Live updates disconnected, reconnecting...';
+    if (es.readyState === EventSource.CLOSED) setTimeout(connect, 3000);
+  };
+  es.onmessage = m => {
+    let ev;
+    try { ev = JSON.parse(m.data); } catch { return; }
+    const type = ev.kind && ev.kind.type;
+    if (type !== 'log') refreshRunsSoon();
+    if (ev.run_id !== S.sel) return;
+    if (S.loading) { S.pending.push(ev); return; }
+    ingest(ev, true);
+    if (type !== 'log') { renderRun(); refreshRunSoon(); }
+  };
+}
+
+/* ---------- advanced: logs ---------- */
+for (const [box, list, prefix] of [[$('lvlFilter'), LEVELS, 'lvl'], [$('srcFilter'), SOURCES, 'src']]) {
+  for (const v of list) {
+    const cb = h('input', { type: 'checkbox', checked: true });
+    cb.onchange = () => $('log').classList.toggle(`hide-${prefix}-${v}`, !cb.checked);
+    box.append(h('label', { class: 'check' }, cb, v));
+  }
+}
+let scrollPending = false;
+function appendLog(ev) {
+  const k = ev.kind || {}, log = $('log');
+  const t = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : '';
+  let line;
+  if (k.type === 'log') {
+    const lvl = LEVELS.includes(k.level) ? k.level : 'info';
+    const grp = String(k.source || '').split('::')[0];
+    line = h('div', { class: `line lvl-${lvl} src-${SOURCES.includes(grp) ? grp : 'pipeline'}` },
+      h('time', null, t), h('span', { class: 'lv' }, lvl), h('span', { class: 'src' }, k.source || ''), h('span', { class: 'msg' }, k.message || ''));
+  } else if (k.type === 'stage_changed' || k.type === 'finished') {
+    const head = k.type === 'finished' ? `Finished (${k.status || (k.ready ? 'ready' : 'failed')})` : `Stage: ${k.stage}`;
+    line = h('div', { class: 'line stage' }, `${t}  ${head}  ${k.message || ''}`);
+  } else if (k.type === 'evidence_added') {
+    line = h('div', { class: 'line lvl-info src-pipeline' }, h('time', null, t), h('span', { class: 'lv' }, 'info'), h('span', { class: 'src' }, 'evidence'), h('span', { class: 'msg' }, `Added: ${k.label}`));
+  } else if (k.type === 'parity_evaluated') {
+    const gaps = (k.gaps || []).length;
+    line = h('div', { class: 'line lvl-info src-compare' }, h('time', null, t), h('span', { class: 'lv' }, 'info'), h('span', { class: 'src' }, 'compare'),
+      h('span', { class: 'msg' }, `Pass ${k.iteration} parity: ${pct(k.score)}${gaps ? `, ${gaps} gap${gaps > 1 ? 's' : ''}` : ''}`));
+  } else return;
+  log.append(line);
+  while (log.childElementCount > MAX_LOG) log.firstElementChild.remove();
+  if ($('autoscroll').checked && !scrollPending) {
+    scrollPending = true;
+    requestAnimationFrame(() => { scrollPending = false; log.scrollTop = log.scrollHeight; });
+  }
+}
+
+/* ---------- advanced: tabs ---------- */
+function setMode(mode) {
+  S.mode = mode;
+  $('modeToggle').setAttribute('aria-pressed', String(mode === 'advanced'));
+  try { localStorage.setItem('craft.mode', mode); } catch {}
+  renderAdvanced();
+}
+$('modeToggle').onclick = () => setMode(S.mode === 'advanced' ? 'simple' : 'advanced');
+
+const tabButtons = [...$('tabs').children];
+tabButtons.forEach(b => { b.id = 'tabbtn-' + b.dataset.tab; b.type = 'button'; b.onclick = () => { S.tab = b.dataset.tab; renderAdvanced(); }; });
+$('tabs').addEventListener('keydown', e => {
+  if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+  const vis = tabButtons.filter(b => !b.hidden), i = vis.indexOf(document.activeElement);
+  const next = vis[(i + (e.key === 'ArrowRight' ? 1 : vis.length - 1)) % vis.length];
+  next.focus(); next.click();
+});
+
+function renderAdvanced() {
+  const adv = S.mode === 'advanced';
+  $('advPanel').hidden = !adv;
+  if (!adv) return;
+  const hasDeep = !!evById('deep-findings');
+  $('tabbtn-deep').hidden = !hasDeep;
+  if (S.tab === 'deep' && !hasDeep) S.tab = 'logs';
+  for (const b of tabButtons) {
+    const on = b.dataset.tab === S.tab;
+    b.setAttribute('aria-selected', String(on));
+    b.tabIndex = on ? 0 : -1;
+    b.setAttribute('aria-controls', b.dataset.tab === 'logs' ? 'tab-logs' : 'tab-other');
+  }
+  $('tab-logs').hidden = S.tab !== 'logs';
+  $('tab-other').hidden = S.tab === 'logs';
+  $('tab-logs').setAttribute('aria-labelledby', 'tabbtn-logs');
+  $('tab-other').setAttribute('aria-labelledby', 'tabbtn-' + S.tab);
+  if (S.tab === 'logs') {
+    if (!S.sel) $('log').replaceChildren(h('p', { class: 'muted' }, 'Select or start a run to see its log.'));
+    return;
+  }
+  const panel = $('tab-other'), token = {};
+  panel.token = token;
+  const fill = (...nodes) => { if (panel.token === token) panel.replaceChildren(...nodes); };
+  if (S.tab === 'tools') return renderTools(fill);
+  if (!S.run) return fill(h('p', { class: 'muted' }, S.sel ? 'Loading...' : 'Select or start a run first.'));
+  ({ evidence: renderEvidence, compare: renderCompare, spec: renderSpec, deep: renderDeep, agentlog: renderAgentLog, history: renderPasses })[S.tab](fill);
+}
+
+const empty = msg => h('div', { class: 'empty' }, msg);
+const deepTag = e => (e && !e.clean_room_safe ? h('span', { class: 'tag-deep', title: 'Collected by authorized Deep inspection' }, 'Deep') : null);
+const list = items => (items && items.length ? h('ul', null, items.map(x => h('li', { class: 'wrap' }, typeof x === 'string' ? x : JSON.stringify(x)))) : h('p', { class: 'muted' }, 'None.'));
+const kv = obj => (obj && Object.keys(obj).length ? h('dl', { class: 'kv' }, Object.entries(obj).flatMap(([k, v]) => [h('dt', null, k), h('dd', null, typeof v === 'string' ? v : JSON.stringify(v))])) : h('p', { class: 'muted' }, 'None.'));
+const rawJson = data => h('details', null, h('summary', null, 'Raw JSON'), h('pre', { class: 'text' }, JSON.stringify(data, null, 2)));
+const failed = e => h('p', { class: 'error' }, e.message);
+
+async function openViewer(item) {
+  $('viewerTitle').replaceChildren(item.label || item.id, deepTag(item) || '');
+  const body = $('viewerBody');
+  if (isImage(item)) body.replaceChildren(h('img', { src: fileUrl(S.sel, item.relative_path), alt: item.label || item.id }));
+  else {
+    body.replaceChildren(h('p', { class: 'muted' }, 'Loading...'));
+    try { const a = await artifact(item); body.replaceChildren(h('pre', { class: 'text' }, a.json ? JSON.stringify(a.json, null, 2) : a.text)); }
+    catch (e) { body.replaceChildren(failed(e)); }
+  }
+  if (!$('viewer').open) $('viewer').showModal();
+}
+
+function renderEvidence(fill) {
+  const imgs = S.evidence.filter(isImage), rest = S.evidence.filter(e => !isImage(e));
+  if (!S.evidence.length) return fill(empty('No evidence collected yet.'));
+  fill(
+    imgs.length ? h('div', { class: 'gallery' }, imgs.map(e => h('button', { class: 'thumb', type: 'button', onclick: () => openViewer(e) },
+      h('img', { src: fileUrl(S.sel, e.relative_path), alt: '', loading: 'lazy' }), h('span', null, e.label, deepTag(e))))) : '',
+    rest.length ? h('ul', { class: 'evlist' }, rest.map(e => h('li', null, h('button', { type: 'button', onclick: () => openViewer(e) },
+      h('span', { class: 'wrap' }, e.label, deepTag(e)), h('span', { class: 'k' }, e.kind))))) : '');
+}
+
+function passNumbers(re) {
+  const set = new Set((S.run.iterations || []).map(i => i.iteration));
+  for (const e of S.evidence) { const m = re.exec(e.id); if (m) set.add(Number(m[1])); }
+  return [...set].sort((a, b) => a - b);
+}
+function passPicker(passes, onPick) {
+  if (S.pass == null || !passes.includes(S.pass)) S.pass = passes[passes.length - 1];
+  return h('div', { class: 'passes', role: 'group', 'aria-label': 'Pass' }, passes.map(p =>
+    h('button', { class: 'btn small', type: 'button', 'aria-pressed': String(p === S.pass), onclick: () => { S.pass = p; onPick(); } }, `Pass ${p}`)));
+}
+function figure(title, item) {
+  return h('figure', null, h('figcaption', null, title, deepTag(item)), item && isImage(item)
+    ? h('button', { type: 'button', onclick: () => openViewer(item), 'aria-label': `Enlarge ${title}` }, h('img', { src: fileUrl(S.sel, item.relative_path), alt: item.label || title }))
+    : empty('Not available for this pass'));
+}
+async function renderCompare(fill) {
+  const passes = passNumbers(/^(?:recreation|heatmap|comparison)-(\d+)$/);
+  if (!passes.length) return fill(empty('No comparison yet. It appears after the first Check.'));
+  const picker = passPicker(passes, renderAdvanced), p = S.pass;
+  const originals = S.evidence.filter(e => e.id.startsWith('screenshot-'));
+  const original = evById('screenshot-desktop') || originals[0];
+  const iter = S.run.iterations.find(i => i.iteration === p);
+  const figs = h('div', { class: 'figs' }, figure('Original', original), figure(`Recreation (pass ${p})`, evById('recreation-' + p)), figure('Difference heatmap', evById('heatmap-' + p)));
+  const details = h('div', null, h('p', { class: 'muted' }, 'Loading scores...'));
+  fill(picker, figs, details);
+  const cmp = evById('comparison-' + p);
+  let data = null, error = null;
+  if (cmp) { try { data = (await artifact(cmp)).json; } catch (e) { error = e; } }
+  const comps = data && data.components ? Object.entries(data.components).filter(([, c]) => c) : [];
+  const score = data && typeof data.score === 'number' ? data.score : iter && iter.parity_score;
+  const gaps = (data && data.gaps) || (iter && iter.gaps) || [];
+  details.replaceChildren(
+    h('h3', null, `Pass ${p} score: ${pct(score)}`),
+    error ? failed(error) : '',
+    comps.length ? h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', null, 'Component'), h('th', null, 'Score'), h('th', null, 'Weight'), h('th', null, 'Detail'))),
+      h('tbody', null, comps.map(([name, c]) => h('tr', null, h('td', null, name), h('td', null, pct(c.score)),
+        h('td', null, typeof c.weight === 'number' ? String(c.weight) : '--'), h('td', null, c.detail || '')))))) : h('p', { class: 'muted' }, 'No component breakdown for this pass.'),
+    h('h3', null, 'Gaps'), list(gaps));
+}
+async function renderSpec(fill) {
+  const item = evById('clean-room-spec');
+  if (!item) return fill(empty('The clean-room spec appears after Study.'));
+  fill(h('p', { class: 'muted' }, 'Loading spec...'));
+  let s;
+  try { s = (await artifact(item)).json; } catch (e) { return fill(failed(e)); }
+  if (!s) return fill(h('p', { class: 'error' }, 'The spec is not valid JSON.'));
+  fill(
+    h('h3', null, s.target_label || 'Overview'), h('p', { class: 'wrap' }, s.overview || ''),
+    h('h3', null, 'Observed features'), list(s.observed_features),
+    h('h3', null, 'UI structure'), list(s.ui_structure),
+    h('h3', null, 'Visual tokens'), kv(s.visual_tokens),
+    h('h3', null, 'Requirements'),
+    (s.requirements || []).length ? h('div', null, s.requirements.map(r => h('div', { class: 'req wrap' },
+      h('code', null, `${r.id || ''} · ${r.area || ''}`), h('div', null, r.description || ''),
+      r.acceptance_signal ? h('div', { class: 'muted' }, 'Check: ', r.acceptance_signal) : '',
+      (r.expect_text || []).length ? h('div', { class: 'muted' }, 'Must show: ', r.expect_text.join(', ')) : ''))) : h('p', { class: 'muted' }, 'None.'),
+    h('h3', null, 'Open questions'), list(s.open_questions),
+    h('h3', null, 'Reference images'), list(s.reference_images),
+    rawJson(s));
+}
+async function renderDeep(fill) {
+  const item = evById('deep-findings');
+  fill(h('p', { class: 'muted' }, 'Loading deep findings...'));
+  let d;
+  try { d = (await artifact(item)).json; } catch (e) { return fill(failed(e)); }
+  if (!d) return fill(h('p', { class: 'error' }, 'The findings are not valid JSON.'));
+  fill(h('p', null, h('span', { class: 'badge deep' }, 'Deep'), ' Collected by authorized inspection of internals. Not clean-room safe.'),
+    h('h3', null, 'Format details'), kv(d.format_details),
+    h('h3', null, 'Extracted symbols'), list(d.extracted_symbols),
+    h('h3', null, 'Assets discovered'), list(d.assets_discovered),
+    h('h3', null, 'Notes'), list(d.notes), rawJson(d));
+}
+async function renderAgentLog(fill) {
+  const passes = passNumbers(/^agent-log-(\d+)$/).filter(p => evById('agent-log-' + p));
+  if (!passes.length) return fill(empty('No agent log yet. It appears after each Build pass.'));
+  const picker = passPicker(passes, renderAdvanced), p = S.pass, out = h('pre', { class: 'text' }, 'Loading...');
+  fill(picker, out);
+  try { out.textContent = (await artifact(evById('agent-log-' + p))).text || '(empty log)'; } catch (e) { out.replaceWith(failed(e)); }
+}
+function renderPasses(fill) {
+  const it = S.run.iterations || [];
+  if (!it.length) return fill(empty('No completed passes yet.'));
+  fill(h('div', { class: 'table-wrap' }, h('table', null,
+    h('thead', null, h('tr', null, h('th', null, 'Pass'), h('th', null, 'Score'), h('th', null, 'Summary'), h('th', null, 'Gaps'))),
+    h('tbody', null, it.map(i => h('tr', null, h('td', null, String(i.iteration)), h('td', null, pct(i.parity_score)), h('td', null, i.summary || ''), h('td', null, list(i.gaps))))))));
+}
+async function renderTools(fill) {
+  const refresh = h('button', { class: 'btn small', type: 'button', onclick: () => { S.doctor = null; renderAdvanced(); } }, 'Check again');
+  if (!S.doctor) {
+    fill(h('p', { class: 'muted' }, 'Checking installed tools...'));
+    S.doctor = api('/api/doctor');
+  }
+  let rows;
+  try { rows = await S.doctor; } catch (e) { S.doctor = null; return fill(failed(e), refresh); }
+  fill(h('div', { class: 'toolbar' }, h('span', { class: 'muted' }, `${rows.filter(r => r.ok).length} of ${rows.length} available`), refresh),
+    h('div', { class: 'table-wrap' }, h('table', null,
+      h('thead', null, h('tr', null, h('th', null, 'Tool'), h('th', null, 'Type'), h('th', null, 'Status'), h('th', null, 'Used for'), h('th', null, 'Detail'))),
+      h('tbody', null, rows.map(r => h('tr', null, h('td', null, r.name), h('td', null, r.category), h('td', { class: r.ok ? 'ok' : 'bad' }, r.ok ? 'Available' : 'Missing'),
+        h('td', null, r.purpose || ''), h('td', null, r.detail || '')))))));
+}
+
+/* ---------- start ---------- */
+(async () => {
+  let mode = 'simple';
+  try { mode = localStorage.getItem('craft.mode') === 'advanced' ? 'advanced' : 'simple'; } catch {}
+  setMode(mode);
+  updateSourceHelp();
+  setDeep(false);
+  connect();
+  loadAgents();
+  await loadRuns();
+  const active = S.runs.find(r => r.status === 'running');
+  if (active && !S.sel) selectRun(active.id);
+  renderAdvanced();
+})();
+</script>
+</body>
+</html>
